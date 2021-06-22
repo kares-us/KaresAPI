@@ -59,7 +59,8 @@ router.post('/submit_simple_form', async (req, res) => {
             .then(vis => {
                 if (vis) {
                     if (String(vis.county) !== String(newData.county)) return res.status(400).json({ type: 'Error', message: 'Visitor already exists in different county.' })
-                    vis = newVisitor
+                    vis.name = data.name
+                    vis.email = data.email
                     vis.requestFulfilled = false
                     vis.markModified()
                     return vis.save()
