@@ -9,7 +9,7 @@ router.post('/create', async (req, res) => {
     const data = req.body
     const newResource = new Resource(data)
 
-    if (data.name === '' || data.tag === '' || data.county === '') return res.status(400).json({ message: 'Can\'t leave name, tag, or county empty' })
+    if (data.name === '' || data.tag === '' || data.county === '') return res.status(400).json({ type: 'Error', message: 'Can\'t leave name, tag, or county empty' })
 
     try {
         await Resource.findOne({ name: data.name })
