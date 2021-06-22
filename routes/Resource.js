@@ -82,8 +82,9 @@ router.delete('/delete/:id', async (req, res) => {
                             }
                         }
                     })
-                resource.remove()
-                return res.send(200).json({ type: 'Success', message: 'Sucessfully removed resource.' })
+                resource.remove(() => {
+                    return res.status(200).json({ type: 'Success', message: 'Sucessfully removed resource.' })
+                })
             })
     } catch (e) {
         return res.status(500).json({ type: 'Error', message: e.message })
