@@ -23,7 +23,7 @@ const visitorSchema = new mongoose.Schema({
     },
     additionalInfo: {
         type: Object,
-        required: true,
+        required: false,
         default: {}
     },
     requestFulfilled: {
