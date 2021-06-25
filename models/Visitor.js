@@ -24,7 +24,7 @@ const visitorSchema = new mongoose.Schema({
     additionalInfo: {
         type: Object,
         required: false,
-        default: {}
+        default: null
     },
     requestFulfilled: {
         type: Boolean,
