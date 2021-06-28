@@ -32,8 +32,7 @@ router.get('/get_admin_county/:email', checkAuth, async (req, res) => {
                 if (!adm) {
                     return res.status(404).json({ type: 'Error', message: 'Admin does not exist.' })
                 }
-                console.log(adm)
-                County.find({ _id: { $in: adm.counties }})
+                County.find({ _id: { $in: adm.county } })
                     .then(cnty => res.status(200).json({ type: 'Success', message: 'Successfully fetched admin counties.', data: cnty }))
 
             })
