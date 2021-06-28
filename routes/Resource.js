@@ -3,9 +3,11 @@ const router = express.Router()
 const County = require('../models/County')
 const Resource = require('../models/Resource')
 
+const { checkAdmin } = require('../util/middleware')
+
 const { formatResourceData } = require('../util/resourceHelpers')
 
-router.post('/create', async (req, res) => {
+router.post('/create', checkAdmin, async (req, res) => {
     const data = req.body
     const newResource = new Resource(data)
 
@@ -34,7 +36,7 @@ router.post('/create', async (req, res) => {
 })
 
 
-router.patch('/update/:id', async (req, res) => {
+router.patch('/update/:id', checkAdmin, async (req, res) => {
     const data = req.body
     const { id } = req.params
 
@@ -65,7 +67,7 @@ router.patch('/update/:id', async (req, res) => {
     }
 })
 
-router.delete('/delete/:id', async (req, res) => {
+router.delete('/delete/:id', checkAdmin, async (req, res) => {
     const { id } = req.params
 
     try {

@@ -3,7 +3,9 @@ const router = express.Router()
 const Admin = require('../models/Admin')
 const County = require('../models/County')
 
-router.get('/get_all', async (req, res) => {
+const { checkAuth, checkAdmin } = require('../util/middleware')
+
+router.get('/get_all', checkAdmin, async (req, res) => {
     try {
         await Admin.find()
             .then(adm => {
@@ -54,19 +56,20 @@ router.get('/get_admin/:email', async (req, res) => {
     }
 })
 
-router.patch('/update/:email', async (req, res) => {
+router.patch('/update/:email', checkAdmin, async (req, res) => {
     const { email } = req.params
-    const county = req.body.county
-    const roles = req.body.roles
+    const { county, countyName, roles } = req.body
 
     try {
         await Admin.findOne({ email })
             .then(adm => {
                 if (!adm) return res.status(404).send({ type: 'Error', message: 'Admin not found' })
                 else {
-                    if (county != null) adm.county = county
+                    if (county != null) {
+                        adm.county = county
+                        adm.countyName = countyName
+                    }
                     if (roles != null) adm.roles = roles
-
                     adm.save()
                         .then(admin => res.status(200).json({ type: 'Success', message: 'Successfully updated admin.', data: admin }))
                 }
@@ -75,5 +78,22 @@ router.patch('/update/:email', async (req, res) => {
         return res.status(500).json({ type: 'Error', message: e.message })
     }
 })
+
+router.delete('/delete/:email', checkAdmin, async (req, res) => {
+    const { email } = req.params
+
+    try {
+        await Admin.findOne({ email })
+            .then(adm => {
+                if (!adm) return res.status(404).send({ type: 'Error', message: 'Admin not found' })
+                adm.remove()
+                    .then(() => res.status(200).json({ type: 'Success', message: 'Successfully deleted admin.' }))
+            })
+    } catch (e) {
+        return res.status(500).json({ type: 'Error', message: e.message })
+    }
+})
+
+
 
 module.exports = router

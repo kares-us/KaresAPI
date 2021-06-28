@@ -6,7 +6,8 @@ const AdminSchema = new Schema({
     name: { type: String, required: true },
     email: { type: String, required: true },
     profilePicture: { type: String, required: false },
-    county: { type: Schema.Types.ObjectId, ref: 'County'},
+    county: { type: Schema.Types.ObjectId, ref: 'County' },
+    countyName: { type: String },
     roles: [{ type: String, default: [] }]
 })
 

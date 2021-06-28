@@ -4,8 +4,10 @@ const County = require('../models/County')
 const Visitor = require('../models/Visitor')
 const Admin = require('../models/Admin')
 const { formatSimpleFormInfo, formatAdvancedFormInfo } = require('../util/visitorHelpers')
+const { checkAuth, checkAdmin } = require('../util/middleware')
 
-router.post('/mark_fulfilled/:id', async (req, res) => {
+
+router.post('/mark_fulfilled/:id', checkAuth, async (req, res) => {
     const { id } = req.params
 
     try {
@@ -24,7 +26,7 @@ router.post('/mark_fulfilled/:id', async (req, res) => {
     }
 })
 
-router.post('/archive_visitor/:id', async (req, res) => {
+router.post('/archive_visitor/:id', checkAuth, async (req, res) => {
     const { id } = req.params
 
     try {
@@ -58,10 +60,9 @@ router.post('/submit_simple_form', async (req, res) => {
         await Visitor.findOne({ phone: newData.phone })
             .then(vis => {
                 if (vis) {
-                    if (String(vis.county) !== String(newData.county)) return res.status(400).json({ type: 'Error', message: 'Visitor already exists in different county.' })
+                    if (String(vis.county) !== String(newData.county)) return res.status(400).json({ type: 'Error', message: 'Visitor already exists in different county. Please call (270)866-4200 for assistance.' })
                     vis.name = data.name
                     vis.email = data.email
-                    vis.requestFulfilled = false
                     vis.markModified()
                     return vis.save()
                         .then(newVis => res.status(200).json({ type: 'Success', message: 'Successfully created visitor.', data: newVis }))
@@ -88,13 +89,28 @@ router.post('/submit_advanced_form', async (req, res) => {
     const newVisitor = new Visitor(newData)
 
     try {
-        await Visitor.findOne({ phone: newData.phone })
+        await Visitor.findOne({ social: newData.social })
             .then(vis => {
                 if (vis) {
-                    if (String(vis.county) !== String(newData.county)) return res.status(400).json({ type: 'Error', message: 'Visitor already exists in different county.' })
+                    if (String(vis.county) !== String(newData.county)) return res.status(400).json({ type: 'Error', message: 'Visitor already exists in different county. Please call (270)866-4200 for assistance.' })
                 }
                 return newVisitor.save()
                     .then(newVis => res.status(200).json({ type: 'Success', message: 'Successfully created visitor.', data: newVis }))
+            })
+    } catch (e) {
+        return res.status(500).json({ type: 'Error', message: e.message })
+    }
+})
+
+router.delete('/delete/:id', checkAuth, async (req, res) => {
+    const { id } = req.params
+
+    try {
+        await Visitor.findById(id)
+            .then(vis => {
+                if (!vis) return res.status(404).send({ type: 'Error', message: 'Visitor not found' })
+                vis.remove()
+                    .then(() => res.status(200).json({ type: 'Success', message: 'Successfully deleted visitor.' }))
             })
     } catch (e) {
         return res.status(500).json({ type: 'Error', message: e.message })
