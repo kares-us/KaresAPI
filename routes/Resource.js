@@ -6,12 +6,19 @@ const Resource = require('../models/Resource')
 const { checkAdmin } = require('../util/middleware')
 
 const { formatResourceData } = require('../util/resourceHelpers')
+const { formatPhoneNumber } = require('../util/dataFormatters')
 
 router.post('/create', checkAdmin, async (req, res) => {
     const data = req.body
-    const newResource = new Resource(data)
-
+    
     if (data.name === '' || data.tag === '' || data.county === '') return res.status(400).json({ type: 'Error', message: 'Can\'t leave name, tag, or county empty' })
+
+    if (data.phone) {
+        data.phone = formatPhoneNumber(data.phone)
+        if (data.phone === null) return res.status(400).json({ type: 'Error', message: 'Invalid Phone Number' })
+    }
+
+    const newResource = new Resource(data)
 
     try {
         await Resource.findOne({ name: data.name })
