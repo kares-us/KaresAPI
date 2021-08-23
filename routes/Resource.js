@@ -10,7 +10,7 @@ const { formatPhoneNumber } = require('../util/dataFormatters')
 
 router.post('/create', checkAdmin, async (req, res) => {
     const data = req.body
-    
+
     if (data.name === '' || data.tag === '' || data.county === '') return res.status(400).json({ type: 'Error', message: 'Can\'t leave name, tag, or county empty' })
 
     if (data.phone) {
@@ -25,17 +25,10 @@ router.post('/create', checkAdmin, async (req, res) => {
             .then(resource => {
                 if (resource) return res.status(403).send({ type: 'Error', message: 'Resource already exists.' })
                 County.findById(data.county)
-                    .then(county => {
+                    .then(() => {
                         newResource
                             .save()
-                            .then(() => {
-                                county.resources.push(newResource)
-                                county.markModified('resources')
-                                county.save()
-                                return res.status(200).json({ type: 'Success', message: 'Successfully created resource.' })
-                            })
                     })
-
             })
     } catch (e) {
         return res.status(500).json({ type: 'Error', message: e.message })

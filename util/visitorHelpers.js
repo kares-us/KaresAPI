@@ -2,8 +2,10 @@ const { formatPhoneNumber, formatEmail } = require("./dataFormatters")
 
 function formatSimpleFormInfo(data) {
     for (var key in data) {
-        if (data[key] === '' || data[key] === null) {
-            return Error(`Cannot leave ${key} empty.`)
+        if (key != 'email') {
+            if (data[key] === '' || data[key] === null) {
+                return Error(`Cannot leave ${key} empty.`)
+            }
         }
     }
 
@@ -12,18 +14,15 @@ function formatSimpleFormInfo(data) {
         if (data.phone === null) return Error('Phone number format error.')
     }
 
-    if (data.email) {
-        data.email = formatEmail(data.email)
-        if (data.email === null) return Error('Phone number format error.')
-    }
-
     return data
 }
 
 function formatAdvancedFormInfo(data) {
     for (var key in data) {
-        if (data[key] === '' || data[key] === null) {
-            return Error(`Cannot leave ${key} empty.`)
+        if (key != 'email') {
+            if (data[key] === '' || data[key] === null) {
+                return Error(`Cannot leave ${key} empty.`)
+            }
         }
     }
 
@@ -44,11 +43,6 @@ function formatAdvancedFormInfo(data) {
     if (data.phone) {
         data.phone = formatPhoneNumber(data.phone)
         if (data.phone === null) return Error('Phone number format error.')
-    }
-
-    if (data.email) {
-        data.email = formatEmail(data.email)
-        if (data.email === null) return Error('Phone number format error.')
     }
 
     return data
