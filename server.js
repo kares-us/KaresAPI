@@ -10,9 +10,12 @@ const mongoose = require('mongoose')
 const app = express()
 
 // Setup Database
-const localDB = process.env.MONGODB_URI
+const mongoURI = process.env.MONGODB_URI
+const localURI = process.env.LOCAL_MONGODB_URI
 
-mongoose.connect(localDB, { useNewUrlParser: true, useUnifiedTopology: true })
+const dbURI = localURI
+
+mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
 
 const db = mongoose.connection
 db.on('error', (err) => console.log(err))

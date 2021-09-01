@@ -1,96 +1,87 @@
 const express = require('express')
+const { OAuth2Client } = require('google-auth-library');
 const router = express.Router()
 const Admin = require('../models/Admin')
-const County = require('../models/County')
+const whitelistedAdmins = require('../data/admins.json')
+const { sendJsonResponse } = require('../util/responseHelpers')
+const { checkAdmin } = require('../util/middleware')
 
-const { checkAuth, checkAdmin } = require('../util/middleware')
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
-router.get('/get_all', checkAdmin, async (req, res) => {
+router.get('/', checkAdmin, async (req, res) => {
     try {
         await Admin.find()
-            .then(adm => {
-                if (!adm) return res.status(200).json({ type: 'Success', message: 'No admin accounts were found' })
-                return res.status(200).json({ type: 'Success', message: 'Successfully fetched admin accounts.', data: adm })
+            .then(admins => {
+                return sendJsonResponse(res, 200, "Successfully fetched admins.", admins)
             })
     } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
+        return sendJsonResponse(res, 500, e.message)
     }
 })
 
-router.post('/create_account', async (req, res) => {
-    const newAdmin = new Admin({
-        email: req.body.email,
-        name: req.body.name,
-        profilePicture: req.body.picture
-    })
+router.post('/login', async (req, res) => {
+    const { name, email, profilePicture } = req.body
 
-    try {
-        await Admin.findOne({ email: req.body.email })
-            .then(adm => {
-                if (adm) {
-                    return adm.save()
-                        .then(existingAdmin => res.status(200).json({ type: 'Success', message: 'Successfully created account.', data: existingAdmin }))
-                }
-                newAdmin.save()
-                    .then(newAdm => res.status(200).json({ type: 'Success', message: 'Successfully created account.', data: newAdm }))
-            })
-    } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
-    }
-})
-
-
-router.get('/get_admin/:email', async (req, res) => {
-    const { email } = req.params
+    if (!whitelistedAdmins.includes(email)) return sendJsonResponse(res, 401, "Unauthorized.")
 
     try {
         await Admin.findOne({ email })
             .then(adm => {
                 if (!adm) {
-                    return res.status(404).json({ type: 'Error', message: 'Admin does not exist.' })
+                    const newAdmin = new Admin({ email, name, profilePicture })
+                    newAdmin.save()
+                        .then(() => sendJsonResponse(res, 200, "Successfully signed in."))
+                } else {
+                    return sendJsonResponse(res, 200, "Successfully signed in.")
                 }
-                return res.status(200).json({ type: 'Success', message: 'Successfully fetched admin', data: adm })
             })
     } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
+        return sendJsonResponse(res, 500, e.message)
     }
 })
 
-router.patch('/update/:email', checkAdmin, async (req, res) => {
-    const { email } = req.params
-    const { county, countyName, roles } = req.body
+router.post('/token', async (req, res) => {
+    const { token } = req.body
 
     try {
-        await Admin.findOne({ email })
+        await client.verifyIdToken({ idToken: token })
+            .then(ticket => {
+                const payload = ticket.getPayload()
+
+                if (whitelistedAdmins.includes(payload.email)) {
+                    Admin.findOne({ email: payload.email })
+                        .then(adm => {
+                            return sendJsonResponse(res, 200, "Authenticated", adm)
+                        })
+                } else {
+                    return sendJsonResponse(res, 401, "Unauthorized.")
+                }
+            })
+            .catch(e => {
+                return sendJsonResponse(res, 500, "Cannot verify token.")
+            })
+    } catch (e) {
+        return sendJsonResponse(res, 500, e.message)
+    }
+})
+
+router.patch('/update/:id', checkAdmin, async (req, res) => {
+    const { id } = req.params
+    const { counties, roles } = req.body
+
+    try {
+        await Admin.findById(id)
             .then(adm => {
-                if (!adm) return res.status(404).send({ type: 'Error', message: 'Admin not found' })
+                if (!adm) return sendJsonResponse(res, 404, "Admin not found.")
                 else {
-                    if (county != null) {
-                        adm.county = county
-                        adm.countyName = countyName
-                    }
+                    if (counties != null) adm.counties = counties
                     if (roles != null) adm.roles = roles
-                    adm.save()
-                        .then(admin => res.status(200).json({ type: 'Success', message: 'Successfully updated admin.', data: admin }))
+
+                    adm.save().then(() => { sendJsonResponse(res, 200, "Successfully updated admin.") })
                 }
             })
     } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
-    }
-})
-
-router.delete('/delete/:email', checkAdmin, async (req, res) => {
-    const { email } = req.params
-
-    try {
-        await Admin.findOne({ email })
-            .then(adm => {
-                if (!adm) return res.status(404).send({ type: 'Error', message: 'Admin not found' })
-                adm.remove()
-                    .then(() => res.status(200).json({ type: 'Success', message: 'Successfully deleted admin.' }))
-            })
-    } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
+        return sendJsonResponse(res, 500, e.message)
     }
 })
 

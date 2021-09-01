@@ -14,17 +14,7 @@ const countySchema = new mongoose.Schema({
             secondaryText: '#2f3136',
             button: '#85cbff',
         }
-    },
-    resources: [{
-        type: mongoose.Schema.Types.ObjectId,
-        required: false,
-        ref: 'Resource'
-    }],
-    visitors: [{
-        type: mongoose.Schema.Types.ObjectId,
-        required: false,
-        ref: 'Visitor'
-    }]
+    }
 })
 
 module.exports = mongoose.model('County', countySchema)

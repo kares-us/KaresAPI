@@ -1,11 +1,77 @@
 const express = require('express')
 const router = express.Router()
-const County = require('../models/County')
 const Visitor = require('../models/Visitor')
-const Admin = require('../models/Admin')
-const { formatSimpleFormInfo, formatAdvancedFormInfo } = require('../util/visitorHelpers')
-const { checkAuth, checkAdmin } = require('../util/middleware')
 
+const { formatPhoneNumber, formatEmail } = require('../util/dataFormatters')
+const { sendJsonResponse } = require('../util/responseHelpers')
+const { checkAuth } = require('../util/middleware')
+
+
+router.get('/county/:id', checkAuth, async (req, res) => {
+    let { id } = req.params
+
+    try {
+        await Visitor.find({ county: id })
+            .then(visitors => sendJsonResponse(res, 200, "Successfully fetched visitors.", visitors))
+    } catch (e) {
+        return sendJsonResponse(res, 500, e.message)
+    }
+})
+
+router.post('/submit_simple', async (req, res) => {
+    let data = req.body
+    let { county, name, email, phone } = req.body
+
+    if (!county) return sendJsonResponse(res, 400, "You must select a county.")
+    if (!name) return sendJsonResponse(res, 400, "You must enter a name.")
+    if (!phone) return sendJsonResponse(res, 400, "You must enter a phone number.")
+    if (formatPhoneNumber(phone) === null) return sendJsonResponse(res, 400, "Bad phone number format.")
+    data.phone = formatPhoneNumber(phone)
+    if (email) {
+        if (formatEmail(email) === null) return sendJsonResponse(res, 400, "Bad email format.")
+        data.email = formatEmail(email)
+    }
+
+    const newVisitor = new Visitor(data)
+
+    try {
+        await Visitor.findOne({ email })
+            .then(vis => {
+                if (vis) return sendJsonResponse(res, 400, "Visitor already exists.")
+                newVisitor.save(() => sendJsonResponse(res, 200, "Successfully submitted form."))
+            })
+    } catch (e) {
+        return sendJsonResponse(res, 500, e.message)
+    }
+})
+
+
+router.post('/submit_advanced', async (req, res) => {
+    const data = req.body
+    const { county, name, phone } = data
+
+    if (!county) return sendJsonResponse(res, 400, "You must select a county.")
+    if (!name) return sendJsonResponse(res, 400, "You must enter a name.")
+    if (!phone) return sendJsonResponse(res, 400, "You must enter a phone number.")
+    if (formatPhoneNumber(phone) === null) return sendJsonResponse(res, 400, "Bad phone number format.")
+    data.phone = formatPhoneNumber(phone)
+    if (email) {
+        if (formatEmail(email) === null) return sendJsonResponse(res, 400, "Bad email format.")
+        data.email = formatEmail(email)
+    }
+
+    const newVisitor = new Visitor(data)
+
+    try {
+        await Visitor.findOne({ social: newData.social })
+            .then(vis => {
+                if (vis) return sendJsonResponse(res, 400, "Visitor already exists.")
+                newVisitor.save(() => sendJsonResponse(res, 200, "Successfully submitted form."))
+            })
+    } catch (e) {
+        return sendJsonResponse(res, 500, e.message)
+    }
+})
 
 router.post('/mark_fulfilled/:id', checkAuth, async (req, res) => {
     const { id } = req.params
@@ -13,16 +79,14 @@ router.post('/mark_fulfilled/:id', checkAuth, async (req, res) => {
     try {
         await Visitor.findById(id)
             .then(vis => {
-                if (!vis) return res.status(404).json({ type: 'Error', message: 'Visitor Not Found' })
+                if (!vis) return sendJsonResponse(res, 404, "Visitor does not exist.")
                 else {
                     vis.requestFulfilled = true
-                    vis.markModified()
-                    vis.save()
-                        .then(vis1 => res.status(200).json({ type: 'Success', message: 'Successfully marked visitor fulfilled', data: vis1 }))
+                    vis.save().then(() => sendJsonResponse(res, 200, "Successfully marked visitor fulfilled."))
                 }
             })
     } catch (e) {
-        return res.status(500).json({ message: e.message })
+        return sendJsonResponse(res, 500, e.message)
     }
 })
 
@@ -32,73 +96,14 @@ router.post('/archive_visitor/:id', checkAuth, async (req, res) => {
     try {
         await Visitor.findById(id)
             .then(vis => {
-                if (!vis) return res.status(404).json({ type: 'Error', message: 'Visitor Not Found' })
+                if (!vis) return sendJsonResponse(res, 404, "Visitor does not exist.")
                 else {
                     vis.archived = true
-                    vis.markModified()
-                    vis.save()
-                        .then(vis1 => res.status(200).json({ type: 'Success', message: 'Successfully marked visitor as archived', data: vis1 }))
+                    vis.save().then(() => sendJsonResponse(res, 200, "Successfully archived visitor."))
                 }
             })
     } catch (e) {
-        return res.status(500).json({ message: e.message })
-    }
-})
-
-router.post('/submit_simple_form', async (req, res) => {
-    const data = req.body
-
-    const newData = formatSimpleFormInfo(data)
-
-    if (newData.message) return res.status(400).json({ type: 'Error', message: newData.message })
-
-    newData.county = newData.county._id
-
-    const newVisitor = new Visitor(newData)
-
-    try {
-        await Visitor.findOne({ phone: newData.phone })
-            .then(vis => {
-                if (vis) {
-                    if (String(vis.county) !== String(newData.county)) return res.status(400).json({ type: 'Error', message: 'Visitor already exists in different county. Please call (270)866-4200 for assistance.' })
-                    vis.name = data.name
-                    vis.email = data.email
-                    vis.markModified()
-                    return vis.save()
-                        .then(newVis => res.status(200).json({ type: 'Success', message: 'Successfully created visitor.', data: newVis }))
-                }
-                return newVisitor.save()
-                    .then(newVis => res.status(200).json({ type: 'Success', message: 'Successfully created visitor.', data: newVis }))
-            })
-    } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
-
-    }
-})
-
-
-router.post('/submit_advanced_form', async (req, res) => {
-    const data = req.body
-
-    const newData = formatAdvancedFormInfo(data)
-
-    if (newData.message) return res.status(400).json({ type: 'Error', message: newData.message })
-
-    newData.county = newData.county._id
-
-    const newVisitor = new Visitor(newData)
-
-    try {
-        await Visitor.findOne({ social: newData.social })
-            .then(vis => {
-                if (vis) {
-                    if (String(vis.county) !== String(newData.county)) return res.status(400).json({ type: 'Error', message: 'Visitor already exists in different county. Please call (270)866-4200 for assistance.' })
-                }
-                return newVisitor.save()
-                    .then(newVis => res.status(200).json({ type: 'Success', message: 'Successfully created visitor.', data: newVis }))
-            })
-    } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
+        return sendJsonResponse(res, 500, e.message)
     }
 })
 
@@ -108,12 +113,11 @@ router.delete('/delete/:id', checkAuth, async (req, res) => {
     try {
         await Visitor.findById(id)
             .then(vis => {
-                if (!vis) return res.status(404).send({ type: 'Error', message: 'Visitor not found' })
-                vis.remove()
-                    .then(() => res.status(200).json({ type: 'Success', message: 'Successfully deleted visitor.' }))
+                if (!vis) return sendJsonResponse(res, 404, "Visitor does not exist.")
+                vis.remove().then(() => sendJsonResponse(res, 200, "Successfully deleted visitor."))
             })
     } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
+        return sendJsonResponse(res, 500, e.message)
     }
 })
 

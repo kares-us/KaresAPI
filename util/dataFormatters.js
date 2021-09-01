@@ -9,13 +9,17 @@ function formatPhoneNumber(phoneNumberString) {
 }
 
 function formatEmail(email) {
-    if (/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(email)) {
-        return (email)
-    }
+    if (/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(email)) return (email)
     return (null)
+}
+
+function formatHexColor(hexColor) {
+    if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hexColor)) return hexColor
+    return null
 }
 
 module.exports = {
     formatPhoneNumber,
-    formatEmail
+    formatEmail,
+    formatHexColor
 }

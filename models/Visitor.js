@@ -18,10 +18,6 @@ const visitorSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'County'
     },
-    countyName: {
-        type: String,
-        required: true
-    },
     additionalInfo: {
         type: Object,
         required: false,

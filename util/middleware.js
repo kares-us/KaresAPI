@@ -1,43 +1,22 @@
-const Admin = require('../models/Admin')
+const jwt = require('jsonwebtoken')
+const { sendJsonResponse } = require('./responseHelpers')
 
 async function checkAuth(req, res, next) {
-    let email = req.header('session')
+    let sessionToken = req.headers['session']
+    let token = jwt.decode(sessionToken)
 
-    try {
-        await Admin.findOne({ email })
-            .then(adm => {
-                if (!adm) {
-                    return res.status(401).json({ type: 'Error', message: 'Unauthorized.' })
-                }
-
-                if (adm.roles.includes('Admin') || adm.roles.includes('County Manager')) {
-                    next()
-                } else return res.status(401).json({ type: 'Error', message: 'Unauthorized.' })
-
-            })
-    } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
-    }
+    if (token.roles.includes('County Manager') || token.roles.includes('Admin')) {
+        next()
+    } else sendJsonResponse(res, 401, "Unauthorized")
 }
 
 async function checkAdmin(req, res, next) {
-    let email = req.header('session')
+    let sessionToken = req.headers['session']
+    let token = jwt.decode(sessionToken)
 
-    try {
-        await Admin.findOne({ email })
-            .then(adm => {
-                if (!adm) {
-                    return res.status(401).json({ type: 'Error', message: 'Unauthorized.' })
-                }
-
-                if (adm.roles.includes('Admin')) {
-                    next()
-                } else return res.status(401).json({ type: 'Error', message: 'Unauthorized.' })
-
-            })
-    } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
-    }
+    if (token.roles.includes('Admin')) {
+        next()
+    } else sendJsonResponse(res, 401, "Unauthorized")
 }
 
 

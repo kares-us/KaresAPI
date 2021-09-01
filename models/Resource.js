@@ -26,7 +26,7 @@ const resourceSchema = new mongoose.Schema({
         type: String,
         required: false
     },
-    meetingTime: {
+    additionalInformation: {
         type: String,
         required: false
     },

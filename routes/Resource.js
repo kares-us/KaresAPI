@@ -1,69 +1,61 @@
 const express = require('express')
 const router = express.Router()
-const County = require('../models/County')
 const Resource = require('../models/Resource')
 
+const { formatPhoneNumber } = require('../util/dataFormatters')
+const { sendJsonResponse } = require('../util/responseHelpers')
 const { checkAdmin } = require('../util/middleware')
 
-const { formatResourceData } = require('../util/resourceHelpers')
-const { formatPhoneNumber } = require('../util/dataFormatters')
-
 router.post('/create', checkAdmin, async (req, res) => {
-    const data = req.body
+    let data = req.body
+    let { name, county, tag, phone } = data
 
-    if (data.name === '' || data.tag === '' || data.county === '') return res.status(400).json({ type: 'Error', message: 'Can\'t leave name, tag, or county empty' })
+    if (!name || !county || !tag) return sendJsonResponse(res, 400, 'Missing Info. Insure Name, County, and Tag are fulfilled.')
 
-    if (data.phone) {
-        data.phone = formatPhoneNumber(data.phone)
-        if (data.phone === null) return res.status(400).json({ type: 'Error', message: 'Invalid Phone Number' })
-    }
+    if (phone) data.phone = formatPhoneNumber(phone)
+    if (phone === null) return sendJsonResponse(res, 400, 'Bad phone number format.')
 
     const newResource = new Resource(data)
 
     try {
-        await Resource.findOne({ name: data.name })
-            .then(resource => {
-                if (resource) return res.status(403).send({ type: 'Error', message: 'Resource already exists.' })
-                County.findById(data.county)
-                    .then(() => {
-                        newResource
-                            .save()
-                    })
+        await Resource.findOne({ name })
+            .then(rsce => {
+                if (rsce) return sendJsonResponse(res, 400, `Resource already exists with name: '${name}'`)
+                else newResource.save(() => sendJsonResponse(res, 200, "Resource created successfully."))
             })
     } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
+        return sendJsonResponse(res, 500, e.message)
     }
 })
 
 
 router.patch('/update/:id', checkAdmin, async (req, res) => {
     const data = req.body
+    let { name, phone, address, website1, website2, additionalInformation, tag } = data
+    console.log(additionalInformation)
     const { id } = req.params
 
     try {
         await Resource.findById(id)
-            .then(resource => {
-                if (!resource) return res.status(404).send({ type: 'Error', message: 'Resource not found' })
+            .then(rsce => {
+                if (!rsce) return sendJsonResponse(res, 404, `Resource not found with name: ${name}`)
                 else {
-                    const newData = formatResourceData(data)
-
-                    if (newData.name != null) resource.name = newData.name
-                    if (newData.phone != null) resource.phone = newData.phone
-                    if (newData.address != null) resource.address = newData.address
-                    if (newData.website1 != null) resource.website1 = newData.website1
-                    if (newData.website2 != null) resource.website2 = newData.website2
-                    if (newData.meetingTime != null) resource.meetingTime = newData.meetingTime
-                    if (newData.tag != null) resource.tag = newData.tag
-
-                    if (newData.message) return res.status(400).json({ type: 'Error', message: newData.message })
-                    else {
-                        resource.save()
-                        return res.status(200).json({ type: 'Success', message: 'Successfully updated resource.' })
+                    if (phone) {
+                        phone = formatPhoneNumber(phone)
+                        if (phone !== null) rsce.phone = phone
+                        else return sendJsonResponse(res, 400, 'Could not format phone number.')
                     }
+                    if (address !== null) rsce.address = address
+                    if (website1 != null) rsce.website1 = website1
+                    if (website2 != null) rsce.website2 = website2
+                    if (additionalInformation != null) rsce.additionalInformation = additionalInformation
+                    if (tag != null) rsce.tag = tag
+
+                    rsce.save(() => sendJsonResponse(res, 200, 'Successfully updated resource'))
                 }
             })
     } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
+        return sendJsonResponse(res, 500, e.message)
     }
 })
 
@@ -72,34 +64,21 @@ router.delete('/delete/:id', checkAdmin, async (req, res) => {
 
     try {
         await Resource.findById(id)
-            .then(resource => {
-                County.findById(resource.county)
-                    .then(county => {
-                        for (res in county.resources) {
-                            if (parseInt(county.resources[res]._id) === parseInt(resource._id)) {
-                                const index = county.resources.indexOf(county.resources[res]._id)
-                                county.resources.splice(index, 1)
-                                county.markModified('resources')
-                                county.save()
-                            }
-                        }
-                    })
-                resource.remove()
-                return res.status(200).json({ type: 'Success', message: 'Sucessfully removed resource.' })
+            .then(rsce => {
+                if (!rsce) return sendJsonResponse(res, 404, "Resource not found.")
+                rsce.remove(() => sendJsonResponse(res, 200, "Successfully removed resource."))
             })
     } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
+        return sendJsonResponse(res, 500, e.message)
     }
 })
 
-router.get('/get_county_resources/:id', async (req, res) => {
-    const { id } = req.params
-
+router.get('/county/:id', async (req, res) => {
     try {
-        await Resource.find({ county: id })
-            .then(resources => res.status(200).json({ type: 'Success', message: 'Sucessfully fetched all resources.', data: resources }))
+        await Resource.find({ county: req.params.id })
+            .then(resources => sendJsonResponse(res, 200, "Successfully fetched resources.", resources))
     } catch (e) {
-        return res.status(500).json({ type: 'Error', message: e.message })
+        return sendJsonResponse(res, 500, e.message)
     }
 })
 
