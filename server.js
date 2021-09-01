@@ -13,7 +13,7 @@ const app = express()
 const mongoURI = process.env.MONGODB_URI
 const localURI = process.env.LOCAL_MONGODB_URI
 
-const dbURI = mongoURI
+const dbURI = localURI
 
 mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
 
