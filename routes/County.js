@@ -4,7 +4,6 @@ const County = require('../models/County')
 
 const { sendJsonResponse } = require('../util/responseHelpers')
 const { formatHexColor } = require('../util/dataFormatters')
-const { checkAdmin } = require('../util/middleware')
 
 router.get('/', async (req, res) => {
     try {
@@ -32,7 +31,7 @@ router.get('/:id', async (req, res) => {
     }
 })
 
-router.post('/create', checkAdmin, async (req, res) => {
+router.post('/create', async (req, res) => {
     const data = req.body
     let { name, design } = data
 
@@ -55,7 +54,7 @@ router.post('/create', checkAdmin, async (req, res) => {
     }
 })
 
-router.patch('/update/:id', checkAdmin, async (req, res) => {
+router.patch('/update/:id', async (req, res) => {
     const data = req.body
 
     const { id } = req.params

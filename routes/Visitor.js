@@ -4,10 +4,9 @@ const Visitor = require('../models/Visitor')
 
 const { formatPhoneNumber, formatEmail } = require('../util/dataFormatters')
 const { sendJsonResponse } = require('../util/responseHelpers')
-const { checkAuth } = require('../util/middleware')
 
 
-router.get('/county/:id', checkAuth, async (req, res) => {
+router.get('/county/:id', async (req, res) => {
     let { id } = req.params
 
     try {
@@ -35,7 +34,7 @@ router.post('/submit_simple', async (req, res) => {
     const newVisitor = new Visitor(data)
 
     try {
-        await Visitor.findOne({ email })
+        await Visitor.findOne({ phone: data.phone })
             .then(vis => {
                 if (vis) return sendJsonResponse(res, 400, "Visitor already exists.")
                 newVisitor.save(() => sendJsonResponse(res, 200, "Successfully submitted form."))
@@ -48,7 +47,7 @@ router.post('/submit_simple', async (req, res) => {
 
 router.post('/submit_advanced', async (req, res) => {
     const data = req.body
-    const { county, name, phone } = data
+    const { county, name, phone, email } = data
 
     if (!county) return sendJsonResponse(res, 400, "You must select a county.")
     if (!name) return sendJsonResponse(res, 400, "You must enter a name.")
@@ -63,7 +62,7 @@ router.post('/submit_advanced', async (req, res) => {
     const newVisitor = new Visitor(data)
 
     try {
-        await Visitor.findOne({ social: newData.social })
+        await Visitor.findOne({ phone: data.phone })
             .then(vis => {
                 if (vis) return sendJsonResponse(res, 400, "Visitor already exists.")
                 newVisitor.save(() => sendJsonResponse(res, 200, "Successfully submitted form."))
@@ -73,7 +72,7 @@ router.post('/submit_advanced', async (req, res) => {
     }
 })
 
-router.post('/mark_fulfilled/:id', checkAuth, async (req, res) => {
+router.post('/mark_fulfilled/:id', async (req, res) => {
     const { id } = req.params
 
     try {
@@ -90,7 +89,7 @@ router.post('/mark_fulfilled/:id', checkAuth, async (req, res) => {
     }
 })
 
-router.post('/archive_visitor/:id', checkAuth, async (req, res) => {
+router.post('/mark_archived/:id', async (req, res) => {
     const { id } = req.params
 
     try {
@@ -107,7 +106,7 @@ router.post('/archive_visitor/:id', checkAuth, async (req, res) => {
     }
 })
 
-router.delete('/delete/:id', checkAuth, async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
     const { id } = req.params
 
     try {

@@ -4,9 +4,8 @@ const Resource = require('../models/Resource')
 
 const { formatPhoneNumber } = require('../util/dataFormatters')
 const { sendJsonResponse } = require('../util/responseHelpers')
-const { checkAdmin } = require('../util/middleware')
 
-router.post('/create', checkAdmin, async (req, res) => {
+router.post('/create', async (req, res) => {
     let data = req.body
     let { name, county, tag, phone } = data
 
@@ -29,7 +28,7 @@ router.post('/create', checkAdmin, async (req, res) => {
 })
 
 
-router.patch('/update/:id', checkAdmin, async (req, res) => {
+router.patch('/update/:id', async (req, res) => {
     const data = req.body
     let { name, phone, address, website1, website2, additionalInformation, tag } = data
     console.log(additionalInformation)
@@ -59,7 +58,7 @@ router.patch('/update/:id', checkAdmin, async (req, res) => {
     }
 })
 
-router.delete('/delete/:id', checkAdmin, async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
     const { id } = req.params
 
     try {
