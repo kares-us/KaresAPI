@@ -5,10 +5,7 @@ async function checkAuth(req, res, next) {
     let sessionToken = req.headers['session']
     let token = jwt.decode(sessionToken)
 
-    console.log(token)
-
-
-    if (!sessionToken || sessionToken === undefined) return sendJsonResponse(res, 401, "Unauthorized")
+    if (!sessionToken || sessionToken === undefined || token === null) return sendJsonResponse(res, 401, "Unauthorized")
 
     if (token.roles.includes('County Manager') || token.roles.includes('Admin')) {
         next()
@@ -19,9 +16,7 @@ async function checkAdmin(req, res, next) {
     let sessionToken = req.headers['session']
     let token = jwt.decode(sessionToken)
 
-    console.log(token)
-
-    if (!sessionToken || sessionToken === undefined) return sendJsonResponse(res, 401, "Unauthorized")
+    if (!sessionToken || sessionToken === undefined || token === null) return sendJsonResponse(res, 401, "Unauthorized")
 
     if (token.roles.includes('Admin')) {
         next()

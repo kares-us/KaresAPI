@@ -8,7 +8,7 @@ const { checkAdmin } = require('../util/middleware')
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
-router.get('/', checkAdmin, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         await Admin.find()
             .then(admins => {
@@ -65,7 +65,7 @@ router.post('/token', async (req, res) => {
     }
 })
 
-router.patch('/update/:id', checkAdmin, async (req, res) => {
+router.patch('/update/:id', async (req, res) => {
     const { id } = req.params
     const { counties, roles } = req.body
 
