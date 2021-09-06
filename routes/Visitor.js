@@ -20,17 +20,13 @@ router.get('/county/:id', async (req, res) => {
 
 router.post('/submit_simple', async (req, res) => {
     let data = req.body
-    let { county, name, email, phone } = req.body
+    let { county, name, phone } = req.body
 
     if (!county) return sendJsonResponse(res, 400, "You must select a county.")
     if (!name) return sendJsonResponse(res, 400, "You must enter a name.")
     if (!phone) return sendJsonResponse(res, 400, "You must enter a phone number.")
     if (formatPhoneNumber(phone) === null) return sendJsonResponse(res, 400, "Bad phone number format.")
     data.phone = formatPhoneNumber(phone)
-    if (email) {
-        if (formatEmail(email) === null) return sendJsonResponse(res, 400, "Bad email format.")
-        data.email = formatEmail(email)
-    }
 
     const newVisitor = new Visitor(data)
 
@@ -55,10 +51,6 @@ router.post('/submit_advanced', async (req, res) => {
     if (!phone) return sendJsonResponse(res, 400, "You must enter a phone number.")
     if (formatPhoneNumber(phone) === null) return sendJsonResponse(res, 400, "Bad phone number format.")
     data.phone = formatPhoneNumber(phone)
-    if (email) {
-        if (formatEmail(email) === null) return sendJsonResponse(res, 400, "Bad email format.")
-        data.email = formatEmail(email)
-    }
 
     const newVisitor = new Visitor(data)
 
