@@ -5,11 +5,6 @@ const visitorSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    email: {
-        type: String,
-        required: false,
-        default: ""
-    },
     phone: {
         type: String,
         required: true
@@ -19,6 +14,11 @@ const visitorSchema = new mongoose.Schema({
         ref: 'County'
     },
     additionalInfo: {
+        type: Object,
+        required: false,
+        default: null
+    },
+    registerInfo: {
         type: Object,
         required: false,
         default: null
