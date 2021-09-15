@@ -54,6 +54,6 @@ app.use('/resource', resourceRouter)
 
 
 
-app.listen(process.env.PORT || 80, () => {
-  console.log(`Server has started on port ${process.env.PORT || 80}.`)
+app.listen(process.env.PORT || 5000, () => {
+  console.log(`Server has started on port ${process.env.PORT || 5000}.`)
 })
