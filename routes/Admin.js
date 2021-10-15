@@ -65,14 +65,11 @@ router.post('/token', async (req, res) => {
       .then(ticket => {
         const payload = ticket.getPayload()
 
-        if (whitelistedAdmins.includes(payload.email)) {
-          Admin.findOne({ email: payload.email })
-            .then(adm => {
-              return sendJsonResponse(res, 200, "Authenticated", adm)
-            })
-        } else {
-          return sendJsonResponse(res, 401, "Unauthorized.")
-        }
+        Admin.findOne({ email: payload.email })
+          .then(adm => {
+            if (!adm) return sendJsonResponse(res, 401, "Unauthorized.")
+            else return sendJsonResponse(res, 200, "Authenticated", adm)
+          })
       })
       .catch(e => {
         return sendJsonResponse(res, 500, "Cannot verify token.")
